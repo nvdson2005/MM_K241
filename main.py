@@ -2,9 +2,10 @@ import gymnasium as gym
 import gym_cutting_stock
 from policy import GreedyPolicy, RandomPolicy
 from student_submissions.s2210xxx.policy2210xxx import Policy2210xxx
-
 import numpy as np
+
 import time
+from student_submissions.s2210xxx.SimulatedAnnealing import SimulatedAnnealingPolicy
 # Create the environment
 env = gym.make(
     "gym_cutting_stock/CuttingStock-v0",
@@ -49,15 +50,50 @@ if __name__ == "__main__":
     #Uncomment the following code to test your policy
     # Reset the environment
     observation, info = env.reset(seed=42)
-    policy2210xxx = Policy2210xxx(policy_id=1)
+    #policy2210xxx = Policy2210xxx(policy_id=1)
+    simulated_annealing_policy = SimulatedAnnealingPolicy()
+    # for _ in range(200):
+    
+    
+    #This is used for testing one single list of orders
+    # products = observation["products"]
+    # _ = 0
+    # while all([product["quantity"] == 0 for product in products]) == 0:
+    #     #action = policy2210xxx.get_action(observation, info)
+    #     action = simulated_annealing_policy.get_action(observation, info)
+    #     observation, reward, terminated, truncated, info = env.step(action)
+    #     print()
+    #     print(_, "st loop: ", info)
+    #     _ += 1
+    #     #time.sleep(0.5)
+    #     #print(action)
+    #     if terminated or truncated:
+    #         print("===========================")
+    #         print("Finished final order. Final Result")
+    #         print(info)
+    #         time.sleep(10)
+    
+    
+    # This is used for testing multiple orders. When the loop time is less than 200, if the list of orders is finished,
+    # It gets a new order using reset and continue to test the policy.
     for _ in range(200):
-        action = policy2210xxx.get_action(observation, info)
+        action = simulated_annealing_policy.get_action(observation, info)
         observation, reward, terminated, truncated, info = env.step(action)
         print()
         print(_, "st loop: ", info)
         #print(action)
-        time.sleep(0.25)
         if terminated or truncated:
-            observation, info = env.reset()
+            print("===========================")
+            if _ < 199:
+                print("Finished order. Result: ")
+                print(info)
+                print("Getting new order in five seconds...")
+                time.sleep(5)
+                observation, info = env.reset()
+            else:
+                print("Finished final order. Final Result")
+                print(info)
+                time.sleep(5)
+                observation, info = env.reset()
 
 env.close()

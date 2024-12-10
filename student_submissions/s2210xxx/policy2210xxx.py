@@ -1,15 +1,23 @@
 from policy import Policy
 import numpy as np
 from scipy.optimize import linprog
-
+import random
 #Width is the number of elements with -1 in one column, which means that the width is vertical, axis = 1
 #height is the number of elements with -1 in one row, which means that the height is horizontal, axis = 0
 class Policy2210xxx(Policy):
     def __init__(self, policy_id=1):
         assert policy_id in [1, 2], "Policy ID must be 1 or 2"
         self.policy_id = policy_id
+        
+        #Data initalization for Genetic Algorithm
+        self.population_size = 50
+        self.generations= 100
+        self.mutation_rate = 0.01
+        self.tournament_size = 3
+        self.population = []
 
     def get_action(self, observation, info):
+        # Id 1 for First Fit Decreasing implementation
         if self.policy_id == 1:
             #print("Products information before sorting: ", observation["products"])
             
@@ -75,9 +83,25 @@ class Policy2210xxx(Policy):
             # If no valid position is found, return a dummy action
             return {"stock_idx": 0, "size": [0, 0], "position": (0, 0)}
         
+        # Id 2 for Genetic Algorithm Implementation
         elif self.policy_id == 2:
-            pass
+            try:
+                if not self.population:
+                    self.initialize_population(observation['stocks'], observation['products'])
 
+                for generation in range(self.generations):
+                    self.evolve_population()
+
+                best_solution = self.population[0]
+                stock_idx = 0
+                product_size, position = best_solution[stock_idx][1][0]
+                return {"stock_idx": stock_idx, "size": product_size, "position": position}
+            except Exception as e:
+                print(f"An error occurred: {e}")
+                return {"stock_idx": 0, "size": [0, 0], "position": (0, 0)}
+
+    ##################################
+    #Helping functions for First Fit Decreasing
     def _get_stock_size_(self, stock):
         stock_w = np.sum(np.any(stock != -2, axis=1))
         stock_h = np.sum(np.any(stock != -2, axis=0))
@@ -104,3 +128,66 @@ class Policy2210xxx(Policy):
         available_space = np.sum(stock == -1)
         return available_space
     
+    ##################################
+    #Helping functions for Genetic Algorithm
+    def initialize_population(self, stocks, products):
+        self.population = []
+        for _ in range(self.population_size):
+            individual = self.create_random_solution(stocks, products)
+            self.population.append(individual)
+        print("Population initialized: ")
+        print()
+        print(self.population)
+        
+    def create_random_solution(self, stocks, products):
+        solution = []
+        for stock in stocks:
+            stock_solution = []
+            for product in products:
+                if product["quantity"] > 0:
+                    position = (random.randint(0, stock.shape[0] - 1), random.randint(0, stock.shape[1] - 1))
+                    stock_solution.append((product["size"], position))
+            solution.append(stock_solution)
+        return solution
+    
+    def evolve_population(self):
+        new_population = []
+        for _ in range(self.population_size):
+            parent1, parent2 = self.select_parents()
+            child1, child2 = self.crossover(parent1, parent2)
+            child1 = self.mutate(child1)
+            child2 = self.mutate(child2)
+            new_population.extend([child1, child2])
+        self.population = sorted(new_population, key=lambda x: self.calculate_fitness(x))[:self.population_size]
+        
+    def select_parents(self):
+        parents = []
+        for _ in range(2):
+            tournament = random.sample(self.population, self.tournament_size)
+            tournament.sort(key=lambda x: self.calculate_fitness(x), reverse=True)
+            parents.append(tournament[0])
+        return parents[0], parents[1]
+    
+    def crossover(self, parent1, parent2):
+        if random.random() < 0.9:
+            point1, point2 = sorted(random.sample(range(len(parent1)), 2))
+            child1 = parent1[:point1] + parent2[point1:point2] + parent1[point2:]
+            child2 = parent2[:point1] + parent1[point1:point2] + parent2[point2:]
+        else:
+            child1, child2 = parent1, parent2
+        return child1, child2
+    
+    def mutate(self, chromosome):
+        for stock, cuts in chromosome:
+            if random.random() < self.mutation_rate:
+                i = random.randint(0, len(cuts) - 1)
+                j = random.randint(0, len(cuts) - 1)
+                cuts[i], cuts[j] = cuts[j], cuts[i]
+        return chromosome
+    
+    def calculate_fitness(self, solution):
+        fitness = 0
+        for stock_solution in solution:
+            for product_size, position in stock_solution:
+                fitness += product_size[0] * product_size[1]
+        return fitness
