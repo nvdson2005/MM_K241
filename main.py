@@ -50,8 +50,8 @@ if __name__ == "__main__":
     #Uncomment the following code to test your policy
     # Reset the environment
     observation, info = env.reset(seed=42)
-    #policy2210xxx = Policy2210xxx(policy_id=1)
-    simulated_annealing_policy = SimulatedAnnealingPolicy()
+    policy2210xxx = Policy2210xxx(policy_id=2)
+    #simulated_annealing_policy = SimulatedAnnealingPolicy()
     # for _ in range(200):
     
     
@@ -59,8 +59,7 @@ if __name__ == "__main__":
     # products = observation["products"]
     # _ = 0
     # while all([product["quantity"] == 0 for product in products]) == 0:
-    #     #action = policy2210xxx.get_action(observation, info)
-    #     action = simulated_annealing_policy.get_action(observation, info)
+    #     action = policy2210xxx.get_action(observation, info)
     #     observation, reward, terminated, truncated, info = env.step(action)
     #     print()
     #     print(_, "st loop: ", info)
@@ -77,7 +76,7 @@ if __name__ == "__main__":
     # This is used for testing multiple orders. When the loop time is less than 200, if the list of orders is finished,
     # It gets a new order using reset and continue to test the policy.
     for _ in range(200):
-        action = simulated_annealing_policy.get_action(observation, info)
+        action = policy2210xxx.get_action(observation, info)
         observation, reward, terminated, truncated, info = env.step(action)
         print()
         print(_, "st loop: ", info)
