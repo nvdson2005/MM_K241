@@ -1,5 +1,7 @@
 # Mathematical Modelling - Fall 2024
 
+*Note: This is just a repository cloned from the main repository for testing purposes. Access the main repository here: https://github.com/martinakaduc/MM241-Assignment*
+
 # Log:
 
 Inital commit: Add implementation of First Fit Decreasing algorithm into policy.
